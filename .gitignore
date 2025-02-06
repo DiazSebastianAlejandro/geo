@@ -1,0 +1,26 @@
+# ⚡ Ignorar dependencias y configuración
+/vendor/
+node_modules/
+composer.lock
+package-lock.json
+
+# ⚡ Ignorar caché y logs
+*.log
+/.cache
+/tmp/
+/storage/logs/
+/storage/framework/
+
+# ⚡ Ignorar archivos de configuración local
+.env
+.env.local
+.env.development
+.env.production
+
+# ⚡ Ignorar archivos de IDEs y sistemas operativos
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+dev.php
