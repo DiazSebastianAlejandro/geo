@@ -1,0 +1,45 @@
+services:
+  www:
+    build:
+      context: .
+      dockerfile: ./docker/php/Dockerfile
+    platform: linux/arm64
+    ports:
+      - "8443:443"
+      - "8080:80"
+    volumes:
+      - "./:/var/www/html"
+      - "composer-data:/root/.composer/"
+      - "./docker/php/certs/:/etc/apache2/ssl/"
+      - "./docker/php/sites/:/etc/apache2/sites-enabled/"
+      - "./docker/php/php.ini:/usr/local/etc/php/php.ini"
+    extra_hosts:
+      - "mac.GEO.com:127.0.0.1"
+    networks:
+      - GEO_net
+  db8:
+    image: "mysql:8"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+    ports:
+      - "3319:3306"
+    volumes:
+      - db8-data:/var/lib/mysql
+      - ./docker/mysql8:/etc/mysql/conf.d
+    networks:
+      - GEO_net
+  mailhog:
+    image: "mailhog/mailhog"
+    platform: linux/amd64
+    ports:
+      - "8026:8025" # web ui
+    expose:
+      - "1025"
+    networks:
+      - GEO_net
+volumes:
+  db8-data:
+  composer-data:
+
+networks:
+  GEO_net:

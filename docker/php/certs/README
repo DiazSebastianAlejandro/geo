@@ -1,0 +1,14 @@
+openssl req \
+-newkey rsa:4096 \
+-x509 \
+-nodes \
+-keyout ./docker/php/certs/new.key \
+-new \
+-out ./docker/php/certs/new.crt \
+-subj /CN=GEO \
+-reqexts SAN \
+-extensions SAN \
+-config <(cat /System/Library/OpenSSL/openssl.cnf \
+      <(printf '[SAN]\nsubjectAltName = @alt_names\n\n[alt_names]\nDNS.1 = *.GEO.com')) \
+-sha256 \
+-days 3650dock
