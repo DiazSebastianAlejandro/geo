@@ -1,6 +1,6 @@
 # GEO Base Project
 
-This project sets up a GEO environment using Docker, PHP 8.3, Apache, and MySQL. It includes Symfony's `EventDispatcher` library for event handling.
+This project sets up a GEO environment using Docker, PHP 8.3, Apache, and MySQL.
 
 ## Prerequisites
 
@@ -14,8 +14,8 @@ This project sets up a GEO environment using Docker, PHP 8.3, Apache, and MySQL.
 Clone this repository to your local machine:
 
 ```bash
-git clone <repository-url>
-cd <repository-folder>
+git clone git@github.com:DiazSebastianAlejandro/geo.git
+cd geo
 ```
 
 ### 2. Build and Start the Docker Containers
@@ -39,29 +39,18 @@ docker exec www bash
 composer install
 ```
 
-Create uploads folder:
-```bash
-mkdir -p uploads uploads/changelog uploads/temp uploads/error_handler
-```
-
 ### 4. Update Your Hosts File
 
 Add the following entry to your system's `hosts` file to access the CMS locally:
 
 ```text
-127.0.0.1 mac.GEO.com
+127.0.0.1 mac.geo.com
 ```
 
 ### 5. Access the Application
 
-- **HTTP:** [http://mac.GEO.com:8080](http://mac.GEO.com:8080)
-- **HTTPS:** [https://mac.GEO.com:8443](https://mac.GEO.com:8443)
-
-## Installed Packages
-
-This project includes the following PHP packages:
-
-- Symfony EventDispatcher (`symfony/event-dispatcher`)
+- **HTTP:** [http://mac.geo.com:8080](http://mac.GEO.com:8080)
+- **HTTPS:** [https://mac.geo.com:8443](https://mac.GEO.com:8443)
 
 ## Available Commands
 
@@ -72,24 +61,25 @@ This project includes the following PHP packages:
 
 - **Stop Docker Containers:**
   ```bash
-  docker-compose down
+   docker-compose down
   ```
 
 - **Rebuild Docker Images:**
   ```bash
   docker-compose up -d --build
   ```
-
-- **Run Composer Commands:**
+  
+- **Enter the PHP Container:**
   ```bash
-  docker exec www bash
-  <command>
+  docker compose exec www bash
+    ```
+  
+- **Create MySQL Database:**
+  ```bash
+  CREATE DATABASE geo CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ```
+ 
+- **Run migrations:**
+  ```bash
+   vendor/bin/phinx migrate
   ```
-
-## Additional Notes
-
-Ensure that all required volumes and configurations (e.g., certificates for SSL) are set up correctly before starting the containers.
-
----
-
-For issues or contributions, please open an issue or submit a pull request.

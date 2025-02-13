@@ -23,4 +23,4 @@ package-lock.json
 .DS_Store
 Thumbs.db
 
-dev.php
+champion_script.php

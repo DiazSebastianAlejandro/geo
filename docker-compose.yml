@@ -13,10 +13,12 @@ services:
       - "./docker/php/certs/:/etc/apache2/ssl/"
       - "./docker/php/sites/:/etc/apache2/sites-enabled/"
       - "./docker/php/php.ini:/usr/local/etc/php/php.ini"
+      - "./docker/php/conf/servername.conf:/etc/apache2/conf-available/servername.conf"
     extra_hosts:
-      - "mac.GEO.com:127.0.0.1"
+      - "mac.geo.com:127.0.0.1"
     networks:
       - GEO_net
+
   db8:
     image: "mysql:8"
     environment:
@@ -28,15 +30,17 @@ services:
       - ./docker/mysql8:/etc/mysql/conf.d
     networks:
       - GEO_net
+
   mailhog:
     image: "mailhog/mailhog"
     platform: linux/amd64
     ports:
-      - "8026:8025" # web ui
+      - "8026:8025"
     expose:
       - "1025"
     networks:
       - GEO_net
+
 volumes:
   db8-data:
   composer-data:
