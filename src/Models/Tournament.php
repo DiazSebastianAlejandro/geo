@@ -5,6 +5,7 @@ namespace App\Models;
 use DateTime;
 use Exception;
 use PDO;
+use App\Helpers\Number as NumberHelper;
 
 class Tournament extends BaseModel {
     protected static string $table = "tournaments";
@@ -21,7 +22,7 @@ class Tournament extends BaseModel {
     public ?DateTime $draw_generated_at = null;
 
     public function __construct(string $name, string $gender, int $qty_participants) {
-        if (!$this->isPowerOfTwo($qty_participants)) {
+        if (!NumberHelper::isPowerOfTwo($qty_participants)) {
             throw new Exception("The number of participants must be a power of 2 (e.g., 2, 4, 8, 16, ...).");
         }
 
@@ -40,54 +41,66 @@ class Tournament extends BaseModel {
         $players = TournamentPlayer::findByTournament($this->id);
         $totalPlayers = count($players);
 
-        if ($totalPlayers < 2 || ($totalPlayers & ($totalPlayers - 1)) !== 0) {
-            throw new Exception("The tournament must have a power of 2 players (e.g., 2, 4, 8, 16, ...).");
-        }
+        $this->validatePlayersCount($totalPlayers);
+        $this->validatePlayersStructure($players);
 
         shuffle($players);
         $roundName = $this->getRoundName($totalPlayers);
 
-        $match_numbers = range(1, $totalPlayers / 2);
+        if ($totalPlayers === 2) {
+            $this->createSingleMatch($players, $roundName);
+        } else {
+            $this->createTournamentMatches($players, $roundName);
+        }
 
-        for ($i = 0; $i < $totalPlayers; $i += 2) {
-            if (!isset($players[$i]->player_id) || !isset($players[$i + 1]->player_id)) {
-                throw new Exception("Player ID missing in TournamentPlayer objects.");
-            }
+        $this->updateDrawGeneratedAt();
+    }
 
+    private function createSingleMatch(array $players, string $roundName): void {
+        $match = new TournamentMatch(
+            $this->id,
+            $players[0]->player_id,
+            $players[1]->player_id,
+            $roundName,
+            1
+        );
+        $match->save();
+    }
+
+    private function createTournamentMatches(array $players, string $roundName): void {
+        $matchNumber = 1;
+
+        foreach (array_chunk($players, 2) as $pair) {
             $match = new TournamentMatch(
                 $this->id,
-                $players[$i]->player_id,
-                $players[$i + 1]->player_id,
+                $pair[0]->player_id,
+                $pair[1]->player_id,
                 $roundName,
-                $match_numbers[$i / 2]
+                $matchNumber++
             );
             $match->save();
         }
-
-        $this->draw_generated_at = new DateTime();
-        $this->update(["draw_generated_at" => $this->draw_generated_at->format('Y-m-d H:i:s')]);
     }
 
 
 
-    public function init(): void {
-        if ($this->draw_generated_at === null) {
-            throw new Exception("The draw has not been generated yet. Run makeDraw() first.");
+    private function validatePlayersCount(int $totalPlayers): void {
+        if ($totalPlayers < 2 || !NumberHelper::isPowerOfTwo($totalPlayers)) {
+            throw new Exception("The tournament must have a power of 2 players (e.g., 2, 4, 8, 16, ...).");
         }
+    }
 
-        $currentRound = $this->getLastRound();
-
-        if ($currentRound === "Final") {
-            echo "🏆 The tournament has already finished!\n";
-            return;
+    private function validatePlayersStructure(array $players): void {
+        foreach ($players as $player) {
+            if (empty($player->player_id)) {
+                throw new Exception("Player ID missing in TournamentPlayer objects.");
+            }
         }
+    }
 
-        if ($this->isFirstRound($currentRound)) {
-            echo "🎾 Starting the tournament with round: $currentRound...\n";
-            $this->generateNextRound();
-        } else {
-            echo "🔹 Tournament has already started. Init() only plays the first round.\n";
-        }
+    private function updateDrawGeneratedAt(): void {
+        $this->draw_generated_at = new DateTime();
+        $this->update(["draw_generated_at" => $this->draw_generated_at->format('Y-m-d H:i:s')]);
     }
 
     public function generateNextRound(): void {
@@ -98,25 +111,10 @@ class Tournament extends BaseModel {
         $lastRound = $this->getLastRound();
         $lastRoundMatches = TournamentMatch::getMatchesByRound($this->id, $lastRound);
 
-        if (empty($lastRoundMatches)) {
-            throw new Exception("No matches found for the last round.");
-        }
-
-        $winners = [];
-        foreach ($lastRoundMatches as $match) {
-            if (!$match->winner_id) {
-                $match->playMatch();
-            }
-            $winners[] = $match->winner_id;
-        }
-
-        if (!$this->isPowerOfTwo(count($winners))) {
-            throw new Exception("Winners count is not a power of 2.");
-        }
+        $winners = $this->getWinnersFromMatches($lastRoundMatches);
 
         if (count($winners) === 1) {
-            $this->champion_id = $winners[0];
-            $this->update(["champion_id" => $this->champion_id]);
+            $this->setChampion($winners[0]);
             return;
         }
 
@@ -125,22 +123,66 @@ class Tournament extends BaseModel {
             throw new Exception("No next round available.");
         }
 
-        $matchNumbers = range(1, count($winners) / 2);
-        for ($i = 0; $i < count($winners) - 1; $i += 2) {
+        $this->createNextRoundMatches($winners, $nextRoundName);
+    }
+
+    private function getWinnersFromMatches(array $matches): array {
+        if (empty($matches)) {
+            throw new Exception("No matches found for the last round.");
+        }
+
+        $winners = array_map(function ($match) {
+            if (!$match->winner_id) {
+                $match->playMatch();
+            }
+            return $match->winner_id;
+        }, $matches);
+
+        if (!NumberHelper::isPowerOfTwo(count($winners))) {
+            throw new Exception("Winners count is not a power of 2.");
+        }
+
+        return $winners;
+    }
+
+    private function setChampion(int $winnerId): void {
+        $this->champion_id = $winnerId;
+        $this->update(["champion_id" => $this->champion_id]);
+    }
+
+    private function createNextRoundMatches(array $winners, string $roundName): void {
+        $totalWinners = count($winners);
+
+        if ($totalWinners < 2) {
+            throw new Exception("Not enough winners to create the next round.");
+        }
+
+        if ($totalWinners === 2) {
+            $match = new TournamentMatch(
+                $this->id,
+                (int) $winners[0],
+                (int) $winners[1],
+                $roundName,
+                1
+            );
+            $match->save();
+            return;
+        }
+
+        $matchNumbers = range(1, $totalWinners / 2);
+
+        for ($i = 0; $i < $totalWinners; $i += 2) {
             $match = new TournamentMatch(
                 $this->id,
                 (int) $winners[$i],
                 (int) $winners[$i + 1],
-                $nextRoundName,
+                $roundName,
                 $matchNumbers[$i / 2]
             );
             $match->save();
         }
     }
 
-    private function isPowerOfTwo(int $n): bool {
-        return ($n > 0) && (($n & ($n - 1)) === 0);
-    }
 
 
 
@@ -152,12 +194,16 @@ class Tournament extends BaseModel {
         return Player::find($this->champion_id);
     }
 
-
-
-
     public function getLastRound(): string {
-        return TournamentMatch::getLastRound($this->id);
+        $lastRound = TournamentMatch::getLastRound($this->id);
+
+        if ($lastRound === null) {
+            throw new Exception("No matches found for the last round.");
+        }
+
+        return $lastRound;
     }
+
 
     private function isFirstRound(string $round): bool {
         $totalPlayers = count($this->getPlayers());
@@ -172,7 +218,6 @@ class Tournament extends BaseModel {
             default => "R" . $playersCount,
         };
     }
-
 
     private function getNextRoundName(string $currentRound): ?string {
         return match ($currentRound) {
@@ -191,6 +236,4 @@ class Tournament extends BaseModel {
         $stmt = self::$db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-
-
 }

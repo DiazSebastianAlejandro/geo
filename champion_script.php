@@ -4,8 +4,8 @@ require __DIR__ . "/vendor/autoload.php";
 
 use App\Models\Player;
 use App\Models\Tournament;
-use App\Models\TournamentPlayer;
 use App\Models\TournamentMatch;
+use App\Models\TournamentPlayer;
 
 // 🔹 Definir `n` entre 1 y 5 y calcular la cantidad de jugadores
 $n = rand(1, 5);
@@ -17,7 +17,7 @@ echo "<strong>🔢 Cantidad de Jugadores (2^$n): $powerOfTwoPlayers</strong><br>
 echo "<strong>🏆 Crear Torneo..</strong><br>";
 $tournament = new Tournament("Grand Test", rand(0, 1) ? Tournament::GENDER_MALE : Tournament::GENDER_FEMALE, $powerOfTwoPlayers);
 $tournament->save();
-echo "✅ {$tournament->name} torneo {$tournament->gender} de {$tournament->qty_participants} participantes.<br><br>";
+echo "✅ {$tournament->id}{$tournament->name} torneo {$tournament->gender} de {$tournament->qty_participants} participantes.<br><br>";
 
 // 🔹 Crear jugadores
 echo "<strong>👤 Creando participantes...</strong><br>";

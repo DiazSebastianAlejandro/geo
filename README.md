@@ -74,12 +74,22 @@ Add the following entry to your system's `hosts` file to access the CMS locally:
   docker compose exec www bash
     ```
   
+- **Enter Mysql Containder** 
+  ```bash
+  docker exec -it geo-db8-1 bash
+  ```
+
 - **Create MySQL Database:**
   ```bash
   CREATE DATABASE geo CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+  CREATE DATABASE geo_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     ```
  
 - **Run migrations:**
   ```bash
    vendor/bin/phinx migrate
+  ```
+  - **Run migrations for db testing:**
+  ```bash
+   vendor/bin/phinx migrate -e testing
   ```

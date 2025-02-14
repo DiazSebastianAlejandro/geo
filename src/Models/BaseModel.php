@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
+use DateTime;
+use Exception;
 use PDO;
 use PDOException;
-use Exception;
-use DateTime;
 use ReflectionClass;
 
 abstract class BaseModel {
-    protected static ?PDO $db = null;
+    public static ?PDO $db = null;
     protected static string $table = "";
 
     public function __construct() {
@@ -19,7 +19,9 @@ abstract class BaseModel {
     protected static function initDatabase(): void {
         if (self::$db === null) {
             try {
-                $dsn = "mysql:host=db8;port=3306;dbname=geo;charset=utf8mb4";
+                $isTesting = defined('PHPUNIT_COMPOSER_INSTALL') || defined('__PHPUNIT_PHAR__');
+                $dbName = $isTesting ? 'geo_test' : 'geo';
+                $dsn = "mysql:host=geo-db8-1;port=3306;dbname=$dbName;charset=utf8mb4";
                 self::$db = new PDO($dsn, "root", "root");
                 self::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             } catch (PDOException $e) {
@@ -27,6 +29,8 @@ abstract class BaseModel {
             }
         }
     }
+
+
 
     public function save(): bool {
         self::initDatabase();
@@ -47,12 +51,17 @@ abstract class BaseModel {
         $stmt = self::$db->prepare($sql);
         $success = $stmt->execute(array_values($attributes));
 
+        // ✅ Asignar el ID solo si la inserción fue exitosa y el ID se generó correctamente
         if ($success && property_exists($this, 'id')) {
-            $this->id = (int) self::$db->lastInsertId();
+            $lastId = (int) self::$db->lastInsertId();
+            if ($lastId > 0) {
+                $this->id = $lastId;
+            }
         }
 
         return $success;
     }
+
 
     public static function find(int $id): ?self {
         self::initDatabase();

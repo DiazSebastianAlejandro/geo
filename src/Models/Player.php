@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use DateTime;
-use OpenApi\Annotations as OA;
+use InvalidArgumentException;
 
 class Player extends BaseModel {
     protected static string $table = "players";
+    public const GENDER_MALE = 'Male';
+    public const GENDER_FEMALE = 'Female';
 
     public int $id;
     public string $name;
@@ -25,6 +27,12 @@ class Player extends BaseModel {
         int $speed = 0,
         int $reaction_time = 0
     ) {
+        if ($skill_level < 0) {
+            throw new InvalidArgumentException("Skill level cannot be negative.");
+        }
+        if (!in_array($gender, [self::GENDER_MALE, self::GENDER_FEMALE])) {
+            throw new InvalidArgumentException("Gender must be either 'Male' or 'Female'.");
+        }
         $this->name = $name;
         $this->skill_level = $skill_level;
         $this->gender = $gender;

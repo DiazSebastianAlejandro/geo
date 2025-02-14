@@ -28,10 +28,10 @@ return [
         ],
         'testing' => [
             'adapter' => 'mysql',
-            'host' => 'localhost',
-            'name' => 'torneo_db_testing',
+            'host' => 'geo-db8-1',
+            'name' => 'geo_test',
             'user' => 'root',
-            'pass' => 1234,
+            'pass' => 'root',
             'port' => 3306,
             'charset' => 'utf8mb4',
         ]

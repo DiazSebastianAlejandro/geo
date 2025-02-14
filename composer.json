@@ -15,9 +15,6 @@
   "autoload": {
     "psr-4": {
       "App\\": "src/"
-    },
-    "classmap": [
-      "src/swagger.php"
-    ]
+    }
   }
   }
