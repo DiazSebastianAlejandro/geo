@@ -7,7 +7,24 @@ use App\Models\Player;
 use App\Models\TournamentMatch;
 use App\Models\TournamentPlayer;
 use Exception;
+use OpenApi\Annotations as OA;
 use PDO;
+
+/**
+ * @OA\Info(
+ *     title="Torneo API",
+ *     version="1.0",
+ *     description="API para la gestión de torneos de tenis"
+ * )
+ *
+ * @OA\Server(
+ *     url="https://mac.geo.com:8443",
+ *     description="Servidor de desarrollo"
+ * )
+ * @OA\PathItem(path="/api/tournament/simulate")
+ * @OA\PathItem(path="/api/tournament/completed")
+ */
+
 
 class TournamentController {
     protected PDO $db;
@@ -25,18 +42,27 @@ class TournamentController {
      *         required=true,
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="name", type="string"),
-     *             @OA\Property(property="gender", type="string"),
+     *             @OA\Property(property="name", type="string", description="Nombre del torneo"),
+     *             @OA\Property(property="gender", type="string", description="Género del torneo (Male o Female)"),
      *             @OA\Property(property="players", type="array", @OA\Items(type="object",
-     *                 @OA\Property(property="name", type="string"),
-     *                 @OA\Property(property="skill_level", type="integer"),
-     *                 @OA\Property(property="strength", type="integer"),
-     *                 @OA\Property(property="speed", type="integer"),
-     *                 @OA\Property(property="reaction_time", type="integer")
+     *                 @OA\Property(property="name", type="string", description="Nombre del jugador"),
+     *                 @OA\Property(property="skill_level", type="integer", description="Nivel de habilidad del jugador"),
+     *                 @OA\Property(property="strength", type="integer", description="Fuerza del jugador"),
+     *                 @OA\Property(property="speed", type="integer", description="Velocidad del jugador"),
+     *                 @OA\Property(property="reaction_time", type="integer", description="Tiempo de reacción del jugador")
      *             ))
      *         )
      *     ),
-     *     @OA\Response(response=200, description="Resultado del torneo")
+     *     @OA\Response(
+     *         response=200,
+     *         description="Torneo simulado con éxito",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="Champion", type="string", description="Nombre del campeón del torneo")
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Solicitud inválida"),
+     *     @OA\Response(response=500, description="Error interno del servidor")
      * )
      */
     public function simulateTournament(array $data): array {
@@ -83,16 +109,49 @@ class TournamentController {
         }
     }
 
-
-
     /**
      * @OA\Get(
      *     path="/api/tournament/completed",
      *     summary="Obtiene una lista de torneos finalizados con filtros opcionales",
      *     tags={"Tournament"},
-     *     @OA\Parameter(name="date", in="query", description="Fecha del torneo", required=false, @OA\Schema(type="string", format="date")),
-     *     @OA\Parameter(name="gender", in="query", description="Género del torneo", required=false, @OA\Schema(type="string")),
-     *     @OA\Response(response=200, description="Lista de torneos finalizados")
+     *     @OA\Parameter(
+     *         name="date",
+     *         in="query",
+     *         description="Filtrar por fecha de creación del torneo (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="gender",
+     *         in="query",
+     *         description="Filtrar por género del torneo",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"Male", "Female"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="champion_name",
+     *         in="query",
+     *         description="Filtrar torneos donde el campeón tenga un nombre que coincida",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Lista de torneos finalizados",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="id", type="integer", description="ID del torneo"),
+     *                 @OA\Property(property="name", type="string", description="Nombre del torneo"),
+     *                 @OA\Property(property="gender", type="string", description="Género del torneo"),
+     *                 @OA\Property(property="qty_participants", type="integer", description="Cantidad de participantes"),
+     *                 @OA\Property(property="champion_id", type="integer", description="ID del campeón del torneo"),
+     *                 @OA\Property(property="finish_at", type="string", format="date-time", description="Fecha de finalización del torneo")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Solicitud inválida"),
+     *     @OA\Response(response=500, description="Error interno del servidor")
      * )
      */
     public function getCompletedTournaments(array $filters = []): array {

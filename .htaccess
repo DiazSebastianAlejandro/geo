@@ -2,3 +2,7 @@ RewriteEngine On
 
 RewriteCond %{REQUEST_URI} ^/api/
 RewriteRule ^api/.*$ /routes/api.php [QSA,L]
+
+# Redirigir Swagger JSON
+RewriteCond %{REQUEST_URI} ^/api/docs$
+RewriteRule ^api/docs$ /routes/swagger.php [QSA,L]
