@@ -147,8 +147,13 @@ class Tournament extends BaseModel {
 
     private function setChampion(int $winnerId): void {
         $this->champion_id = $winnerId;
-        $this->update(["champion_id" => $this->champion_id]);
+        $this->finish_at = new DateTime();
+        $this->update([
+                          "champion_id" => $this->champion_id,
+                          "finish_at" => $this->finish_at->format('Y-m-d H:i:s')
+                      ]);
     }
+
 
     private function createNextRoundMatches(array $winners, string $roundName): void {
         $totalWinners = count($winners);

@@ -16,7 +16,7 @@ abstract class BaseModel {
         self::initDatabase();
     }
 
-    protected static function initDatabase(): void {
+    public static function initDatabase(): void {
         if (self::$db === null) {
             try {
                 $isTesting = defined('PHPUNIT_COMPOSER_INSTALL') || defined('__PHPUNIT_PHAR__');
