@@ -92,4 +92,7 @@ Add the following entry to your system's `hosts` file to access the CMS locally:
   - **Run migrations for db testing:**
   ```bash
    vendor/bin/phinx migrate -e testing
-  ```
+  ```  
+  - **Challenge documentation:**  
+    [📄 Descargar Documentación](https://drive.google.com/file/d/1wwOffkP8gYVNL6FKf77VQwtzWxWCbTlF/view?usp=drive_link)
+
